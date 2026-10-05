@@ -1,0 +1,59 @@
+
+Script For Business Roles:
+import sailpoint.object.Identity;
+
+String dept = identity.getStringAttribute("department");
+if(dept.equals("Finance"))
+{
+return true;
+}
+return false;
+
+====================================================================
+
+Reference For Filter Condition in BusinessRoles
+
+<CompoundFilter>
+
+   <Applications>
+
+     <Reference class="sailpoint.object.Application" name="OpenDS"/>
+
+     <Reference class="sailpoint.object.Application" name="Ubuntu"/>
+
+   </Applications>
+
+   <CompositeFilter operation="AND">
+
+     <CompositeFilter operation="OR">
+
+       <Filter operation="EQ" property="0:isMemberOf" value="cn=testgroup,ou=Groups,dc=pieters,dc=cx"/>
+
+     </CompositeFilter>
+
+     <CompositeFilter operation="AND">
+
+       <Filter operation="EQ" property="1:group" value="iiq"/>
+
+       <Filter operation="EQ" property="department" value="Software Testing"/>
+
+     </CompositeFilter>
+
+   </CompositeFilter>
+
+</CompoundFilter>
+=================================Rule====================================
+Assign a Business Roles Based on Rule type(identity selector Rule)
+
+import sailpoint.object.Identity;
+
+String dept = identity.getStringAttribute("department");
+if(dept != null @and dept.equalsIgnoreCase("Finance"))
+{
+return true;
+}
+return false;
+====================================workgroup=====================================
+
+
+
