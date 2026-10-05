@@ -1,0 +1,59 @@
+
+===================================IdentityTrigger Rule=====================================
+
+import sailpoint.object.Identity;
+
+String oldDept = previousIdentity.getStringAttribute("department");
+String newDept = newIdentity.getStringAttribute("department");
+
+if(newDept.equals(oldDept))
+{
+return fasle;
+}
+return true;
+==================================IdentityTrigger Rule======================================
+
+import sailpoint.object.Link;
+  import sailpoint.tools.Util;
+  import sailpoint.object.Application;
+  import sailpoint.object.Identity;
+  import sailpoint.api.IdentityService;
+  
+
+  boolean result = false;
+  String oldCompany = "";
+  String newCompany = "";
+  Application app = context.getObjectByName(Application.class, "HRMS");
+  
+  IdentityService ids = new IdentityService(context);
+  
+  List oldList = ids.getLinks(previousIdentity, app);
+  List newList = ids.getLinks(newIdentity, app);
+  
+  //Checking value in PreviousIdentity
+  for(Link prevLink : Util.iterate(oldList))
+  {
+	  if(Util.isNotNullOrEmpty(prevLink.getAttribute("company").toString()))
+	  {
+		  oldCompany = prevLink.getAttribute("company").toString();
+	  }
+  }
+  
+  //Checking value in NewIdentity
+  for(Link newLink : Util.iterate(newList))
+  {
+	  if(Util.isNotNullOrEmpty(newLink.getAttribute("company").toString()))
+	  {
+		  newCompany = newLink.getAttribute("company").toString();
+	  }
+  }
+  
+  if(Util.isNotNullOrEmpty(oldCompany) && Util.isNotNullOrEmpty(newCompany))
+  {
+	  if(!oldCompany.equalsIgnoreCase(newCompany))
+	  {
+		  result = true;
+	  }
+  }
+  
+  return result;
