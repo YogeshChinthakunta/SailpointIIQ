@@ -1,0 +1,130 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE Workflow PUBLIC "sailpoint.dtd" "sailpoint.dtd">
+<Workflow created="1757306934288" explicitTransitions="true" id="c0a800749927176b819927a7d40f0075" modified="1764932681843" name="Custom Application Form workflow" significantModified="1764932681843" type="">
+  <Variable initializer="true" name="transient"/>
+  <Step icon="Start" name="Start" posX="14" posY="28">
+    <Transition to="Identity"/>
+  </Step>
+  <Step icon="Default" name="Identity" posX="142" posY="52">
+    <Approval name="Application Form" owner="script:return launcher;" return="idName,applicationName,entList" send="idName,applicationName,entList">
+      <Form name="Application Form">
+        <Attributes>
+          <Map>
+            <entry key="pageTitle" value="Application Form"/>
+          </Map>
+        </Attributes>
+        <Section>
+          <Field displayName="Identity" filterString="links.application.name==&quot;HR APPLICATION&quot;" name="idName" required="true" type="Identity"/>
+          <Field displayName="Application" filterString="authoritative==false" name="applicationName" postBack="true" required="true" type="Application"/>
+          <Field displayName="Select Entitlement" dynamic="true" multi="true" name="entList" required="true" type="ManagedAttribute">
+            <Attributes>
+              <Map>
+                <entry key="filterString">
+                  <value>
+                    <Script>
+                      <Source>
+
+                        import sailpoint.object.*;
+                        import sailpoint.object.Filter;
+                        import sailpoint.object.QueryOptions;
+                        import sailpoint.object.ManagedAttribute;
+
+                        Filter filter=  Filter.eq("application.id",applicationName);  
+                        field.setFilterString(filter.toString());
+
+                      </Source>
+                    </Script>
+                  </value>
+                </entry>
+              </Map>
+            </Attributes>
+          </Field>
+        </Section>
+        <Button action="next" label="submit"/>
+      </Form>
+    </Approval>
+    <Transition to="Provisioning Step"/>
+  </Step>
+  <Step icon="Default" name="Provisioning Step" posX="314" posY="56">
+    <Script>
+      <Source>
+        import sailpoint.object.*;
+        import sailpoint.object.Identity;
+        import java.util.*;
+        import sailpoint.object.Application;
+
+        import sailpoint.object.ProvisioningPlan.AccountRequest;
+        import sailpoint.object.ProvisioningPlan.AccountRequest.Operation;
+        import sailpoint.object.ProvisioningPlan;
+        import sailpoint.object.ProvisioningPlan.Operation;
+        import sailpoint.object.ProvisioningPlan.AttributeRequest;
+        import sailpoint.api.Provisioner;
+
+        Application app = context.getObjectById(Application.class,workflow.get("applicationName"));
+        log.error("application name is ::::::::::::::"+app);
+
+        Identity idn = context.getObjectById(Identity.class,workflow.get("idName"));
+
+        Object entlist = workflow.get("entList");
+        
+        
+        
+        log.error("application :"+app);
+        log.error("idn :"+idn);
+        log.error("entlist :"+entlist);	
+        
+        if(app != null &amp;&amp; idn != null)
+        {
+           List links = idn.getLinks();
+           for(Link link : links)
+           {
+              if(app.getName().equalsIgnoreCase(link.getApplicationName()))
+                {
+                     log.error("account is alreday existed in application"+app.getName());
+                     return;
+                 }
+
+           }
+
+        
+        ProvisioningPlan plan = new ProvisioningPlan();
+        plan.setIdentity(idn); 
+        AccountRequest accr = new AccountRequest();
+        accr.setApplication(app.getName());
+        accr.setOperation(ProvisioningPlan.AccountRequest.Operation.Create);
+        plan.add(accr);
+
+        //log.error("plan :"+plan.toXml());
+
+        if("Active Directory".equalsIgnoreCase(app.getName()))
+        {
+        accr.add(new AttributeRequest("memberOf",ProvisioningPlan.Operation.Add,entlist));
+        
+        log.error("entitlement added to the accountRequest of Active Directory");
+        
+        }
+
+        else if("JDBCdemo".equalsIgnoreCase(app.getName()))
+        {
+
+        accr.add(new AttributeRequest("entId",ProvisioningPlan.Operation.Add,entlist));
+        log.error("entitlement added to the accountRequest");
+        }
+        log.error("Final plan :"+plan.toXml());
+        Provisioner provisioner = new Provisioner(context);
+        provisioner.execute(plan);
+
+        log.error("Account Created successfully in ::::"+app.getName());     
+        }
+        else
+        {
+        log.error("Application and identity both are null");
+        }
+        
+       
+      </Source>
+    </Script>
+    <Transition to="Stop"/>
+  </Step>
+  <Step icon="Stop" name="Stop" posX="784" posY="83"/>
+</Workflow>
